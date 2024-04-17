@@ -19,6 +19,7 @@ anyhow = "1.0"
 ashpd = { version = "0.8", features = ["gtk4", "tracing"], optional = true }
 futures-channel = "0.3.26"
 gettext-rs = { version = "0.7", features = ["gettext-system"] }
+glycin = { git = "https://gitlab.gnome.org/sophie-h/glycin" }
 gst = { package = "gstreamer", version = "0.22", features = ["v1_20"] }
 gtk = { package = "gtk4", version = "0.8", features = ["gnome_45"] }
 log = "0.4"

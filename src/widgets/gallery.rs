@@ -404,8 +404,10 @@ impl Gallery {
             .current_page()
             .and_downcast_ref::<crate::GalleryVideo>()
         {
-            imp.mobile_controls.set_media_stream(Some(video.stream()));
-            imp.desktop_controls.set_media_stream(Some(video.stream()));
+            if let Ok(stream) = video.stream() {
+                imp.mobile_controls.set_media_stream(Some(stream));
+                imp.desktop_controls.set_media_stream(Some(stream));
+            }
 
             imp.mobile_controls.set_visible(true);
             imp.desktop_controls_revealer.set_reveal_child(true);

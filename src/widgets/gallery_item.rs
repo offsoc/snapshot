@@ -73,39 +73,12 @@ mod imp {
             }
 
             widget.set_halign(gtk::Align::Center);
-
-            let menu = crate::utils::gallery_item_menu(widget.is_picture());
-
-            let popover = gtk::PopoverMenu::from_model(Some(&menu));
-            popover.set_has_arrow(false);
-            if widget.direction() == gtk::TextDirection::Rtl {
-                popover.set_halign(gtk::Align::End);
-            } else {
-                popover.set_halign(gtk::Align::Start);
-            }
-
-            let gesture = gtk::GestureClick::new();
-            gesture.set_button(gdk::BUTTON_SECONDARY);
-            gesture.connect_pressed(
-                glib::clone!(@weak popover, @weak widget => move |_, _, x, y| {
-                    if x > -1.0 && y > -1.0 {
-                        let rectangle = gdk::Rectangle::new(x as i32, y as i32, 0, 0);
-                        popover.set_pointing_to(Some(&rectangle));
-                    } else {
-                        popover.set_pointing_to(None);
-                    }
-                    popover.popup();
-                }),
-            );
-
-            popover.set_parent(&*widget);
-            widget.add_controller(gesture);
-
-            self.popover.set(popover).unwrap();
         }
 
         fn dispose(&self) {
-            self.popover.get().unwrap().unparent();
+            if let Some(popover) = self.popover.get() {
+                popover.unparent();
+            }
             if let Some(child) = self.item.take() {
                 child.unparent();
             }
@@ -129,6 +102,37 @@ unsafe impl<T: GalleryItemImpl> IsSubclassable<T> for GalleryItem {}
 impl GalleryItem {
     pub fn start_loading(&self) {
         self.set_started_loading(true);
+        let widget = self;
+
+        let menu = crate::utils::gallery_item_menu(widget.is_picture());
+
+        let popover = gtk::PopoverMenu::from_model(Some(&menu));
+        popover.set_has_arrow(false);
+        if widget.direction() == gtk::TextDirection::Rtl {
+            popover.set_halign(gtk::Align::End);
+        } else {
+            popover.set_halign(gtk::Align::Start);
+        }
+
+        let gesture = gtk::GestureClick::new();
+        gesture.set_button(gdk::BUTTON_SECONDARY);
+        gesture.connect_pressed(
+            glib::clone!(@weak popover, @weak widget => move |_, _, x, y| {
+             if x > -1.0 && y > -1.0 {
+                    let rectangle = gdk::Rectangle::new(x as i32, y as i32, 0, 0);
+                     popover.set_pointing_to(Some(&rectangle));
+                 } else {
+                     popover.set_pointing_to(None);
+                 }
+                 popover.popup();
+            }),
+        );
+
+        widget.add_controller(gesture);
+        popover.set_parent(&*widget);
+
+        self.imp().popover.set(popover).unwrap();
+
         glib::spawn_future_local(glib::clone!(@weak self as widget => async move {
             let res = if widget.is_picture() {
                 widget.downcast_ref::<crate::GalleryPicture>().unwrap().load_texture().await
